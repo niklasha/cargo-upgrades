@@ -1,0 +1,21 @@
+[package]
+name = "cargo-upgrades"
+version = "0.9.0"
+authors = ["Kornel <kornel@geekhood.net>"]
+categories = ["development-tools::cargo-plugins"]
+repository = "https://gitlab.com/kornelski/cargo-upgrades"
+homepage = "https://lib.rs/cargo-upgrades"
+keywords = ["outdated", "dependencies", "deps", "subcommand"]
+description = "Checks if dependencies in Cargo.toml are up to date. Compatible with workspaces and path dependencies."
+edition = "2018"
+license = "GPL-3.0+"
+readme = "README.md"
+
+[dependencies]
+cargo_metadata = "0.8.1"
+cargo_toml = "0.7.0"
+clap = "2.33.0"
+crates-index = "0.13.1"
+quick-error = "1.2.2"
+semver = "0.9.0"
+dirs = "2.0.1"
