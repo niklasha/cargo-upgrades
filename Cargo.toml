@@ -1,6 +1,6 @@
 [package]
 name = "cargo-upgrades"
-version = "0.9.0"
+version = "1.0.0"
 authors = ["Kornel <kornel@geekhood.net>"]
 categories = ["development-tools::cargo-plugins"]
 repository = "https://gitlab.com/kornelski/cargo-upgrades"
@@ -15,7 +15,7 @@ readme = "README.md"
 cargo_metadata = "0.8.1"
 cargo_toml = "0.7.0"
 clap = "2.33.0"
-crates-index = "0.13.1"
 quick-error = "1.2.2"
 semver = "0.9.0"
-dirs = "2.0.1"
+crates-index = { git = "https://github.com/frewsxcv/rust-crates-index" }
+

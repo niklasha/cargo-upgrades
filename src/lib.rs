@@ -35,12 +35,8 @@ struct Workspace {
 impl UpgradesChecker {
     pub fn new(manifest_path: Option<&str>) -> Result<Self, Error> {
         let crates = std::thread::spawn(|| {
-            let cache_dir = dirs::cache_dir();
-            let cache_dir = cache_dir.as_ref().map(|p| p.as_path())
-                .unwrap_or_else(|| std::path::Path::new("/tmp"));
-            let index = crates_index::Index::new(cache_dir.join("cargo-upgrades-index"));
+            let index = crates_index::Index::new_cargo_default();
             index.retrieve_or_update()?;
-
             let mut crates = HashMap::with_capacity(40000);
             for c in index.crates() {
                 crates.insert(c.name().to_string().into_boxed_str(), c);
@@ -122,4 +118,10 @@ fn beta_vs_stable() {
     assert!(v100 > beta1);
     assert!(beta11 > beta1);
     assert!(beta11 > v100);
+}
+
+#[test]
+fn test_self() {
+    let u = UpgradesChecker::new(None).unwrap();
+    assert_eq!(0, u.outdated_dependencies().count());
 }
