@@ -17,5 +17,4 @@ cargo_toml = "0.7.0"
 clap = "2.33.0"
 quick-error = "1.2.2"
 semver = "0.9.0"
-crates-index = { git = "https://github.com/frewsxcv/rust-crates-index" }
-
+crates-index = "0.13.2"
