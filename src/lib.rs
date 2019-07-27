@@ -38,7 +38,18 @@ impl UpgradesChecker {
     pub fn new(manifest_path: Option<&str>) -> Result<Self, Error> {
         let crates = std::thread::spawn(|| {
             let index = Index::new_cargo_default();
-            index.retrieve_or_update()?;
+            if !index.exists() {
+                index.retrieve()?;
+            } else {
+                let needs_update = index.path().join(".git").metadata()
+                    .and_then(|m| m.modified()).ok()
+                    .map_or(true, |modified| {
+                        modified < std::time::SystemTime::now() - std::time::Duration::from_secs(3600*24)
+                    });
+                if needs_update {
+                    index.update()?;
+                }
+            }
             Ok(index)
         });
 
