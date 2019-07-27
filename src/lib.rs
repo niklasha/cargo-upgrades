@@ -3,7 +3,7 @@ use cargo_metadata::Dependency;
 use cargo_metadata::MetadataCommand;
 use cargo_metadata::Package;
 use cargo_metadata::PackageId;
-use crates_index::Crate;
+use crates_index::Index;
 use quick_error::quick_error;
 use semver::Version;
 use std::collections::HashMap;
@@ -26,7 +26,7 @@ quick_error! {
 
 pub struct UpgradesChecker {
     workspace: Workspace,
-    crates: HashMap<Box<str>, Crate>,
+    index: Index,
 }
 
 struct Workspace {
@@ -37,21 +37,17 @@ struct Workspace {
 impl UpgradesChecker {
     pub fn new(manifest_path: Option<&str>) -> Result<Self, Error> {
         let crates = std::thread::spawn(|| {
-            let index = crates_index::Index::new_cargo_default();
+            let index = Index::new_cargo_default();
             index.retrieve_or_update()?;
-            let mut crates = HashMap::with_capacity(40000);
-            for c in index.crates() {
-                crates.insert(c.name().to_string().into_boxed_str(), c);
-            }
-            Ok(crates)
+            Ok(index)
         });
 
         let workspace = Workspace::new(manifest_path)?;
-        let crates: Result<_, IndexError> = crates.join().unwrap();
+        let index: Result<_, IndexError> = crates.join().unwrap();
 
         Ok(Self {
             workspace,
-            crates: crates?,
+            index: index?,
         })
     }
 }
@@ -83,14 +79,14 @@ impl Workspace {
         cmd
     }
 
-    pub fn check_package(&self, id: &PackageId, index: &HashMap<Box<str>, Crate>) -> Option<(&Package, Vec<Match>)> {
+    pub fn check_package(&self, id: &PackageId, index: &Index) -> Option<(&Package, Vec<Match>)> {
         let package = self.packages.get(id)?;
         let deps = package.dependencies.iter().filter_map(|dep| {
             let is_from_crates_io = dep.source.as_ref().map_or(false, |d| d == "registry+https://github.com/rust-lang/crates.io-index");
             if !is_from_crates_io {
                 return None;
             }
-            let c = index.get(dep.name.as_str())?;
+            let c = index.crate_(dep.name.as_str())?;
             let versions: Vec<_> = c.versions().iter().filter_map(|v| Version::parse(v.version()).ok()).collect();
             let latest_stable = versions.iter().filter(|v| v.pre.is_empty()).max();
             let latest_unstable = versions.iter().filter(|v| !v.pre.is_empty()).max();
@@ -114,7 +110,7 @@ impl Workspace {
 impl UpgradesChecker {
     pub fn outdated_dependencies<'a>(&'a self) -> impl Iterator<Item=(&Package, Vec<Match>)> + 'a {
         self.workspace.members.iter().filter_map(move |id| {
-            self.workspace.check_package(id, &self.crates)
+            self.workspace.check_package(id, &self.index)
         })
         .filter(|(_, deps)| !deps.is_empty())
     }
