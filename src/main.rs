@@ -1,25 +1,22 @@
 use cargo_upgrades::*;
-use clap::*;
+
 
 fn main() {
     // When run via Cargo, the command name is present
-    let args = std::env::args().enumerate().filter(|&(i,ref a)| {
-        i != 1 || a != "upgrades"
-    }).map(|(_,a)| a);
+    let args: Vec<_> = std::env::args().collect();
 
-    let matches = App::new(crate_name!())
-        .version(crate_version!())
-        .about(crate_description!())
-        .arg(
-            Arg::with_name("manifest-path")
-                .long("manifest-path")
-                .value_name("Cargo.toml")
-                .takes_value(true),
-        )
-        .get_matches_from(args);
+    let mut opts = getopts::Options::new();
+    opts.optopt("", "manifest-path", "Alternative location", "Cargo.toml");
+    let matches = match opts.parse(&args[1..]) {
+        Ok(m) => m,
+        Err(e) => {
+            eprintln!("cargo-upgrades v{}\n{}\nUsage: {} --manifest-path=Cargo.toml", env!("CARGO_PKG_VERSION"), e, args[0]);
+            std::process::exit(1);
+        }
+    };
 
-    let manifest_path = matches.value_of("manifest-path");
-    let u = match UpgradesChecker::new(manifest_path) {
+    let manifest_path = matches.opt_str("manifest-path");
+    let u = match UpgradesChecker::new(manifest_path.as_ref().map(|s| s.as_str())) {
         Ok(u) => u,
         Err(e) => {
             eprintln!("error: {}", e);
