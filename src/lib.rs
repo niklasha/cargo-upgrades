@@ -98,7 +98,10 @@ impl Workspace {
                 return None;
             }
             let c = index.crate_(dep.name.as_str())?;
-            let versions: Vec<_> = c.versions().iter().filter_map(|v| Version::parse(v.version()).ok()).collect();
+            let versions: Vec<_> = c.versions().iter()
+                .filter(|v| !v.is_yanked())
+                .filter_map(|v| Version::parse(v.version()).ok())
+                .collect();
             let latest_stable = versions.iter().filter(|v| v.pre.is_empty()).max();
             let latest_unstable = versions.iter().filter(|v| !v.pre.is_empty()).max();
             let latest_usable = latest_stable.or(latest_unstable)?;

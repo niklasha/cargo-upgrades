@@ -1,6 +1,5 @@
 use cargo_upgrades::*;
 
-
 fn main() {
     // When run via Cargo, the command name is present
     let args: Vec<_> = std::env::args().collect();
@@ -12,7 +11,7 @@ fn main() {
         Err(e) => {
             eprintln!("cargo-upgrades v{}\n{}\nUsage: {} --manifest-path=Cargo.toml", env!("CARGO_PKG_VERSION"), e, args[0]);
             std::process::exit(1);
-        }
+        },
     };
 
     let manifest_path = matches.opt_str("manifest-path");
@@ -21,7 +20,7 @@ fn main() {
         Err(e) => {
             eprintln!("error: {}", e);
             std::process::exit(1);
-        }
+        },
     };
 
     let mut printed_anything = false;
@@ -34,7 +33,13 @@ fn main() {
             let matches = d.matches.map(|s| s.to_string());
             let dep = d.dependency;
             let req = dep.req.to_string();
-            println!("  {} {} matches {}; latest is {}", dep.name, req.trim_start_matches('^'), matches.as_ref().map(|s| s.as_str()).unwrap_or("nothing"), d.latest);
+            println!(
+                "  {} {} matches {}; latest is {}",
+                dep.name,
+                req.trim_start_matches('^'),
+                matches.as_ref().map(|s| s.as_str()).unwrap_or("nothing"),
+                d.latest
+            );
         }
         printed_anything = true;
     }

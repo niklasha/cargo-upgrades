@@ -1,6 +1,6 @@
 [package]
 name = "cargo-upgrades"
-version = "1.1.0"
+version = "1.1.1"
 authors = ["Kornel <kornel@geekhood.net>"]
 categories = ["development-tools::cargo-plugins"]
 repository = "https://gitlab.com/kornelski/cargo-upgrades"
