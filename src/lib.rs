@@ -38,18 +38,7 @@ impl UpgradesChecker {
     pub fn new(manifest_path: Option<&str>) -> Result<Self, Error> {
         let crates = std::thread::spawn(|| {
             let index = Index::new_cargo_default();
-            if !index.exists() {
-                index.retrieve()?;
-            } else {
-                let needs_update = index.path().join(".git").metadata()
-                    .and_then(|m| m.modified()).ok()
-                    .map_or(true, |modified| {
-                        modified < std::time::SystemTime::now() - std::time::Duration::from_secs(3600*24)
-                    });
-                if needs_update {
-                    index.update()?;
-                }
-            }
+            index.retrieve_or_update()?;
             Ok(index)
         });
 
@@ -71,7 +60,7 @@ pub struct Match<'a> {
 
 impl Workspace {
     pub fn new(manifest_path: Option<&str>) -> Result<Self, MetadataError> {
-        let mut cmd = Self::new_metadata(manifest_path, CargoOpt::AllFeatures);
+        let cmd = Self::new_metadata(manifest_path, CargoOpt::AllFeatures);
         let metadata = cmd.exec().or_else(|_| {
             Self::new_metadata(manifest_path, CargoOpt::NoDefaultFeatures)
         }.exec())?;
