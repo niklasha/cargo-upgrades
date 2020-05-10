@@ -1,5 +1,8 @@
+pub use cargo_metadata::Error as MetadataError;
+pub use crates_index::Error as IndexError;
 use cargo_metadata::CargoOpt;
 use cargo_metadata::Dependency;
+use cargo_metadata::Metadata;
 use cargo_metadata::MetadataCommand;
 use cargo_metadata::Package;
 use cargo_metadata::PackageId;
@@ -7,8 +10,6 @@ use crates_index::Index;
 use quick_error::quick_error;
 use semver::Version;
 use std::collections::HashMap;
-pub use cargo_metadata::Error as MetadataError;
-pub use crates_index::Error as IndexError;
 
 quick_error! {
     #[derive(Debug)]
@@ -60,23 +61,25 @@ pub struct Match<'a> {
 
 impl Workspace {
     pub fn new(manifest_path: Option<&str>) -> Result<Self, MetadataError> {
-        let cmd = Self::new_metadata(manifest_path, CargoOpt::AllFeatures);
-        let metadata = cmd.exec().or_else(|_| {
-            Self::new_metadata(manifest_path, CargoOpt::NoDefaultFeatures)
-        }.exec())?;
+        let metadata = Self::new_metadata(manifest_path, CargoOpt::AllFeatures)
+        .or_else(|e| {
+            Self::new_metadata(manifest_path, CargoOpt::SomeFeatures(vec![]))
+            .or_else(|_| Self::new_metadata(manifest_path, CargoOpt::NoDefaultFeatures))
+            .map_err(|_| e)
+        })?;
         Ok(Self {
             packages: metadata.packages.into_iter().map(|p| (p.id.clone(), p)).collect(),
             members: metadata.workspace_members,
         })
     }
 
-    fn new_metadata(manifest_path: Option<&str>, features: CargoOpt) -> MetadataCommand {
+    fn new_metadata(manifest_path: Option<&str>, features: CargoOpt) -> Result<Metadata, MetadataError> {
         let mut cmd = MetadataCommand::new();
         if let Some(path) = manifest_path {
             cmd.manifest_path(path);
         }
         cmd.features(features);
-        cmd
+        cmd.exec()
     }
 
     pub fn check_package(&self, id: &PackageId, index: &Index) -> Option<(&Package, Vec<Match>)> {
