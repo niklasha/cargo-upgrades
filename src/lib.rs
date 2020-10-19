@@ -6,7 +6,8 @@ use cargo_metadata::Metadata;
 use cargo_metadata::MetadataCommand;
 use cargo_metadata::Package;
 use cargo_metadata::PackageId;
-use crates_index::Index;
+use crates_index::BareIndex as Index;
+use crates_index::BareIndexRepo;
 use quick_error::quick_error;
 use semver::Version;
 use std::collections::HashMap;
@@ -25,21 +26,15 @@ quick_error! {
     }
 }
 
-pub struct UpgradesChecker {
+pub struct UpgradesCheckerInit {
     workspace: Workspace,
     index: Index,
 }
 
-struct Workspace {
-    packages: HashMap<PackageId, Package>,
-    members: Vec<PackageId>,
-}
-
-impl UpgradesChecker {
+impl UpgradesCheckerInit {
     pub fn new(manifest_path: Option<&str>) -> Result<Self, Error> {
         let crates = std::thread::spawn(|| {
             let index = Index::new_cargo_default();
-            index.retrieve_or_update()?;
             Ok(index)
         });
 
@@ -51,6 +46,23 @@ impl UpgradesChecker {
             index: index?,
         })
     }
+
+    pub fn checker(&self) -> Result<UpgradesChecker<'_>, Error> {
+        Ok(UpgradesChecker {
+            workspace: &self.workspace,
+            index: self.index.open_or_clone()?,
+        })
+    }
+}
+
+pub struct UpgradesChecker<'a> {
+    workspace: &'a Workspace,
+    index: BareIndexRepo<'a>,
+}
+
+struct Workspace {
+    packages: HashMap<PackageId, Package>,
+    members: Vec<PackageId>,
 }
 
 pub struct Match<'a> {
@@ -82,7 +94,7 @@ impl Workspace {
         cmd.exec()
     }
 
-    pub fn check_package(&self, id: &PackageId, index: &Index) -> Option<(&Package, Vec<Match>)> {
+    pub fn check_package(&self, id: &PackageId, index: &BareIndexRepo) -> Option<(&Package, Vec<Match>)> {
         let package = self.packages.get(id)?;
         let deps = package.dependencies.iter().filter_map(|dep| {
             let is_from_crates_io = dep.source.as_ref().map_or(false, |d| d == "registry+https://github.com/rust-lang/crates.io-index");
@@ -113,7 +125,7 @@ impl Workspace {
     }
 }
 
-impl UpgradesChecker {
+impl UpgradesChecker<'_> {
     pub fn outdated_dependencies<'a>(&'a self) -> impl Iterator<Item=(&Package, Vec<Match>)> + 'a {
         self.workspace.members.iter().filter_map(move |id| {
             self.workspace.check_package(id, &self.index)
@@ -134,6 +146,7 @@ fn beta_vs_stable() {
 
 #[test]
 fn test_self() {
-    let u = UpgradesChecker::new(None).unwrap();
+    let u = UpgradesCheckerInit::new(None).unwrap();
+    let u = u.checker().unwrap();
     assert_eq!(0, u.outdated_dependencies().count());
 }

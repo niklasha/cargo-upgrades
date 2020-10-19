@@ -15,7 +15,14 @@ fn main() {
     };
 
     let manifest_path = matches.opt_str("manifest-path");
-    let u = match UpgradesChecker::new(manifest_path.as_ref().map(|s| s.as_str())) {
+    let u = match UpgradesCheckerInit::new(manifest_path.as_ref().map(|s| s.as_str())) {
+        Ok(u) => u,
+        Err(e) => {
+            eprintln!("error: {}", e);
+            std::process::exit(1);
+        },
+    };
+    let u = match u.checker() {
         Ok(u) => u,
         Err(e) => {
             eprintln!("error: {}", e);
