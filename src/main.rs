@@ -6,6 +6,7 @@ fn main() {
 
     let mut opts = getopts::Options::new();
     opts.optopt("", "manifest-path", "Alternative location", "Cargo.toml");
+    opts.optflag("", "pre", "Allow pre-release versions");
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => m,
         Err(e) => {
@@ -14,8 +15,9 @@ fn main() {
         },
     };
 
+    let pre = matches.opt_present("pre");
     let manifest_path = matches.opt_str("manifest-path");
-    let u = match UpgradesCheckerInit::new(manifest_path.as_ref().map(|s| s.as_str())) {
+    let u = match UpgradesCheckerInit::new(manifest_path.as_deref()) {
         Ok(u) => u,
         Err(e) => {
             eprintln!("error: {}", e);
@@ -31,7 +33,7 @@ fn main() {
     };
 
     let mut printed_anything = false;
-    for (package, deps) in u.outdated_dependencies() {
+    for (package, deps) in u.outdated_dependencies(pre) {
         if printed_anything {
             println!();
         }
@@ -42,7 +44,7 @@ fn main() {
             println!(
                 "  {} matches {}; latest is {}",
                 dep.name,
-                matches.as_ref().map(|s| s.as_str()).unwrap_or("nothing"),
+                matches.as_deref().unwrap_or("nothing"),
                 d.latest
             );
         }
