@@ -1,6 +1,6 @@
 [package]
 name = "cargo-upgrades"
-version = "1.2.0"
+version = "1.2.1"
 authors = ["Kornel <kornel@geekhood.net>"]
 categories = ["development-tools::cargo-plugins"]
 repository = "https://gitlab.com/kornelski/cargo-upgrades"
@@ -12,10 +12,10 @@ license = "GPL-3.0+"
 readme = "README.md"
 
 [dependencies]
-cargo_metadata = "0.12.0"
+cargo_metadata = "0.13.1"
 quick-error = "2.0.0"
 semver = "0.11.0"
-crates-index = "0.16.0"
+crates-index = "0.16.3"
 getopts = "0.2.21"
 
 [package.metadata.docs.rs]

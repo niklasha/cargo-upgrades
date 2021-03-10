@@ -35,15 +35,13 @@ fn main() {
         if printed_anything {
             println!();
         }
-        println!("{}: {}", package.name, package.manifest_path.display());
+        println!("{}: {}", package.name, package.manifest_path);
         for d in deps {
             let matches = d.matches.map(|s| s.to_string());
             let dep = d.dependency;
-            let req = dep.req.to_string();
             println!(
-                "  {} {} matches {}; latest is {}",
+                "  {} matches {}; latest is {}",
                 dep.name,
-                req.trim_start_matches('^'),
                 matches.as_ref().map(|s| s.as_str()).unwrap_or("nothing"),
                 d.latest
             );
