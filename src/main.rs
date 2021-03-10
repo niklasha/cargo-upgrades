@@ -5,15 +5,21 @@ fn main() {
     let args: Vec<_> = std::env::args().collect();
 
     let mut opts = getopts::Options::new();
-    opts.optopt("", "manifest-path", "Alternative location", "Cargo.toml");
-    opts.optflag("", "pre", "Allow pre-release versions");
+    opts.optflag("", "pre", "Suggest upgrades from stable to pre-release (alpha, beta) versions");
+    opts.optopt("", "manifest-path", "Check this Cargo project instead of the current dir", "Cargo.toml");
+    opts.optflag("h", "help", "This help");
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => m,
         Err(e) => {
-            eprintln!("cargo-upgrades v{}\n{}\nUsage: {} --manifest-path=Cargo.toml", env!("CARGO_PKG_VERSION"), e, args[0]);
+            eprintln!("error: {}\n{}", e, opts.usage("https://gitlab.com/kornelski/cargo-upgrades"));
             std::process::exit(1);
         },
     };
+
+    if matches.opt_present("h") {
+        println!("cargo-upgrades v{}\n{}", env!("CARGO_PKG_VERSION"), opts.usage("https://gitlab.com/kornelski/cargo-upgrades"));
+        std::process::exit(0);
+    }
 
     let pre = matches.opt_present("pre");
     let manifest_path = matches.opt_str("manifest-path");
