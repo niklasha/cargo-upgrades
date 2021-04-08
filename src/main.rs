@@ -48,7 +48,7 @@ fn main() {
             let matches = d.matches.map(|s| s.to_string());
             let dep = d.dependency;
             println!(
-                "  {} matches {}; latest is {}",
+                "\t{} matches {};\tlatest is {}",
                 dep.name,
                 matches.as_deref().unwrap_or("nothing"),
                 d.latest

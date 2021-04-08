@@ -23,3 +23,6 @@ or
 cargo upgrades --manifest-path=/path/to/Cargo.toml
 ```
 
+## Bonus
+
+If you have `cargo-edit` installed, you can run `cargo upgrade` (without `s`) to automatically bump all dependencies to their latest versions.
