@@ -107,7 +107,7 @@ impl Workspace {
                 .filter_map(|v| Version::parse(v.version()).ok())
                 .partition(|v| dep.req.matches(v));
 
-            let latest_stable = matching.iter().chain(&non_matching).filter(|v| !v.is_prerelease()).max();
+            let latest_stable = matching.iter().chain(&non_matching).filter(|v| v.pre.is_empty()).max();
             let matches_latest_stable = latest_stable.map_or(false, |v| dep.req.matches(v));
             if !include_prerelease && matches_latest_stable {
                 return None;
@@ -116,7 +116,7 @@ impl Workspace {
             let latest_any = matching.iter().chain(&non_matching).max()?;
 
             // Using an unstable req is an opt-in to picking any latest version, even if unstable
-            let matches_any_unstable = matching.iter().find(|v| v.is_prerelease()).is_some();
+            let matches_any_unstable = matching.iter().find(|v| !v.pre.is_empty()).is_some();
             let latest = if include_prerelease || matches_any_unstable {
                 latest_any
             } else {
