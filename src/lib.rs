@@ -6,8 +6,7 @@ use cargo_metadata::Metadata;
 use cargo_metadata::MetadataCommand;
 use cargo_metadata::Package;
 use cargo_metadata::PackageId;
-use crates_index::BareIndex as Index;
-use crates_index::BareIndexRepo;
+use crates_index::Index;
 use quick_error::quick_error;
 use semver::Version;
 use std::collections::HashMap;
@@ -33,31 +32,31 @@ pub struct UpgradesCheckerInit {
 
 impl UpgradesCheckerInit {
     pub fn new(manifest_path: Option<&str>) -> Result<Self, Error> {
-        let crates = std::thread::spawn(|| {
-            let index = Index::new_cargo_default();
-            Ok(index)
+        let manifest_path = manifest_path.map(|s| s.to_owned());
+        let t = std::thread::spawn(move || {
+            Workspace::new(manifest_path.as_deref())
         });
 
-        let workspace = Workspace::new(manifest_path)?;
-        let index: Result<_, IndexError> = crates.join().unwrap();
+        let index = Index::new_cargo_default()?;
+        let workspace = t.join().unwrap()?;
 
         Ok(Self {
             workspace,
-            index: index?,
+            index,
         })
     }
 
     pub fn checker(&self) -> Result<UpgradesChecker<'_>, Error> {
         Ok(UpgradesChecker {
             workspace: &self.workspace,
-            index: self.index.open_or_clone()?,
+            index: &self.index,
         })
     }
 }
 
 pub struct UpgradesChecker<'a> {
     workspace: &'a Workspace,
-    index: BareIndexRepo<'a>,
+    index: &'a Index,
 }
 
 struct Workspace {
@@ -94,7 +93,7 @@ impl Workspace {
         cmd.exec()
     }
 
-    pub fn check_package(&self, id: &PackageId, index: &BareIndexRepo, include_prerelease: bool) -> Option<(&Package, Vec<Match>)> {
+    pub fn check_package(&self, id: &PackageId, index: &Index, include_prerelease: bool) -> Option<(&Package, Vec<Match>)> {
         let package = self.packages.get(id)?;
         let deps = package.dependencies.iter().filter_map(|dep| {
             let is_from_crates_io = dep.source.as_deref() == Some("registry+https://github.com/rust-lang/crates.io-index");
