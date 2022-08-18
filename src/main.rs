@@ -60,6 +60,6 @@ fn main() {
     if printed_anything {
         std::process::exit(7);
     } else {
-        println!("All dependencies are up to date!");
+        println!("OK! Cargo.toml allows `cargo update` to use latest dependencies.");
     }
 }
