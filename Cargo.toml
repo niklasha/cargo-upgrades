@@ -15,7 +15,7 @@ readme = "README.md"
 cargo_metadata = "0.15.0"
 quick-error = "2.0.1"
 semver = "1.0.13"
-crates-index = "0.18.9"
+crates-index = "0.19.7"
 getopts = "0.2.21"
 
 [package.metadata.docs.rs]
@@ -31,3 +31,6 @@ lto = true
 
 [badges]
 maintenance = { status = "passively-maintained" }
+
+[patch.crates-io]
+openssl-sys = { git = "https://github.com/niklasha/rust-openssl.git", branch = "libressl_3_7" }
